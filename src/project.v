@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Your Name
+ * Copyright (c) 2024 sazzach
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -16,12 +16,34 @@ module tt_um_example (
     input  wire       rst_n     // reset_n - low to reset
 );
 
-  // All output pins must be assigned. If not used, assign to 0.
-  assign uo_out  = ui_in + uio_in;  // Example: ou_out is the sum of ui_in and uio_in
-  assign uio_out = 0;
-  assign uio_oe  = 0;
+wire [9:0] row;
+wire [9:0] col;
+wire vsync;
+wire hsync;
+wire vga_active;
+wire [5:0] color; // RRGGBB
 
-  // List all unused inputs to prevent warnings
-  wire _unused = &{ena, clk, rst_n, 1'b0};
+// TinyVGA PMOD
+assign uo_out = {hsync, color[0], color[2], color[4], vsync, color[1], color[3], color[5]};
+
+// All output pins must be assigned. If not used, assign to 0.
+assign uio_out = 0;
+assign uio_oe  = 0;
+
+// List all unused inputs to prevent warnings
+wire _unused = &{ena, ui_in, uio_in, 1'b0};
+
+vga_timing vga_timing_inst (
+    .clk(clk),
+    .rst_n(rst_n),
+    .row(row),
+    .col(col),
+    .vsync(vsync),
+    .hsync(hsync),
+    .vga_active(vga_active)
+);
+
+assign color = vga_active ? {row[6], 1'b0, col[6], 1'b0, 2'b0} : 0;
+//assign color = vga_active ? 6'b111100 : 0;
 
 endmodule
